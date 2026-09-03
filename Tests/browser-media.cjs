@@ -1,0 +1,20 @@
+const fs = require('fs');
+const vm = require('vm');
+const assert = require('assert');
+const root = require('path').join(__dirname, '../FirefoxExtension/');
+for (const file of ['background.js', 'media.js', 'popup.js']) new vm.Script(fs.readFileSync(root + file, 'utf8'));
+let listener;
+let report;
+const item = {ended:false, readyState:2, muted:false, volume:1, paused:false, currentTime:3, poster:'', pause(){this.paused=true}, async play(){this.paused=false}};
+const context = {WeakMap, crypto:require('crypto').webcrypto, document:{title:'Example video', querySelectorAll:()=>[item], querySelector:()=>null}, navigator:{mediaSession:{metadata:{title:'Example title',artist:'Example artist'}}}, browser:{runtime:{onMessage:{addListener:f=>listener=f},sendMessage:async m=>{report=m}}}};
+vm.runInNewContext(fs.readFileSync(root+'media.js','utf8'),context);
+(async()=>{
+ await listener({type:'collect'});
+ assert.equal(report.track.title,'Example title'); assert.equal(report.track.playing,true); assert.equal(report.track.next,false);
+ const token=report.track.token;
+ assert.equal((await listener({type:'control',token,command:'playpause'})).ok,true); assert.equal(item.paused,true);
+ await listener({type:'collect'}); assert.equal(report.track.playing,false);
+ assert.equal((await listener({type:'control',token:'wrong',command:'playpause'})).ok,false);
+ item.muted=true; await listener({type:'collect'}); assert.equal(report.track,null);
+ console.log('Passed: extension syntax, metadata, pause, stable targeting, muted media exclusion.');
+})().catch(e=>{console.error(e);process.exitCode=1});

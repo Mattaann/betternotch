@@ -1,0 +1,11 @@
+build/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+.DS_Store
+*.dSYM/
+*.app/
+*.zip
+*.log
+.env
+.env.*
