@@ -397,7 +397,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSSharingServiceDelega
             closeWork = nil
             lastInside = Date()
             if !shelf.expanded { setExpanded(true) }
-        } else if shelf.expanded && !choosing && !shelf.editingNote && activeShare == nil && !dragging {
+        } else if shelf.expanded {
+            if shelf.editingNote {
+                shelf.editingNote = false
+                panel.makeFirstResponder(nil)
+            }
+            guard !choosing, activeShare == nil, !dragging else { return }
             let remaining = 0.06 - Date().timeIntervalSince(lastInside)
             if remaining <= 0 {
                 closeWork?.cancel()

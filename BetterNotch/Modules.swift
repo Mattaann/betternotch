@@ -53,6 +53,9 @@ struct QuickNotesView: View {
             shelf.focusPanel?()
             focused = shelf.selectedNoteID != nil
         }
+        .onChange(of: shelf.editingNote) { editing in
+            if !editing { focused = false }
+        }
         .onDisappear { shelf.editingNote = false }
     }
 }
